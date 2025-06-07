@@ -8,7 +8,7 @@ function protectMW(req, res, next) {
             throw new APIError('No token provided or invalid token format', 401);
         }
         token = token.split(" ")[1];
-        let decodedData = jwt.verify(token, process.env.SECRETKEY);
+        let decodedData = jwt.verify(token, process.env.JWT_SECRET);
         req.user = decodedData;
         next();
     } catch (err) {
