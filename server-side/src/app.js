@@ -18,3 +18,4 @@ app.use('/doctor', require('./routes/doctor'));
 app.use('/patient', require('./routes/patient'));
 
 module.exports = app;
+
