@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const doctorScheduleSchema = new mongoose.Schema({
   doctor_id: {
     type: mongoose.Schema.Types.ObjectId,

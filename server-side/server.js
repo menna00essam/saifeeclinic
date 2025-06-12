@@ -1,7 +1,7 @@
 const app = require('./src/app');
 const { connectDB } = require('./src/config/database');
 require('./src/config/env');
-const errorHandling = require('./src/middlewares/errorHandling');
+const errorHandling = require('./src/middleware/errorHandling');
 
 const PORT = process.env.PORT || 5000;
 
