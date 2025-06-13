@@ -27,12 +27,17 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       minlength: 6,
+      select: false,
+
     },
     role: {
       type: String,
       enum: ["Admin", "Doctor", "Patient"],
       required: true,
     },
+    doctor_profile: {
+      specialization: { type: String },
+      license_number: { type: String, unique: true, sparse: true },
     avatar: {
       type: String,
       default:
@@ -90,5 +95,6 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
 
 module.exports = mongoose.model("User", userSchema);
