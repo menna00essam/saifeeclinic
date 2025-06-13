@@ -15,6 +15,7 @@ console.log('EMAIL_USER:', process.env.EMAIL_USER);
 console.log('EMAIL_PASS:', process.env.EMAIL_PASS);
 
 app.use(errorHandling);
+app.use("/api/doctors", require("./src/routes/doctor.js")); 
 
 
 app.listen(PORT, () => {
