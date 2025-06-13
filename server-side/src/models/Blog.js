@@ -1,5 +1,4 @@
-
- const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const blogSchema = new mongoose.Schema(
   {
@@ -12,19 +11,18 @@ const blogSchema = new mongoose.Schema(
       required: true,
     },
     image: {
-      type: String, 
-    default: null,
-
+      type: String,
+      default: null,
     },
     author: {
       id: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
-        refPath: 'author.role',
+        ref: "User",
       },
       role: {
         type: String,
-        enum: ['admin', 'doctor'],
+        enum: ["admin", "doctor"],
         required: true,
       },
     },
@@ -40,4 +38,4 @@ const blogSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model('Blog', blogSchema);
+module.exports = mongoose.model("Blog", blogSchema);

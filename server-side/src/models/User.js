@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
   {
@@ -28,6 +28,7 @@ const userSchema = new mongoose.Schema(
       required: true,
       minlength: 6,
       select: false,
+
     },
     role: {
       type: String,
@@ -37,6 +38,14 @@ const userSchema = new mongoose.Schema(
     doctor_profile: {
       specialization: { type: String },
       license_number: { type: String, unique: true, sparse: true },
+    avatar: {
+      type: String,
+      default:
+        "https://asset.cloudinary.com/dzj7opitz/33e8acf51893d09e40a0940b40394f25",
+    },
+    doctor_profile: {
+      specialization: { type: String },
+      license_number: { type: String, unique: true },
       experience: { type: Number, min: 0 },
       qualifications: [
         {
@@ -87,5 +96,5 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model('User', userSchema);
 
+module.exports = mongoose.model("User", userSchema);
