@@ -1,29 +1,35 @@
 const twilio = require('twilio');
+const { convert } = require('html-to-text');
 const smsConfig = require('../config/sms');
 
-
 class SMSService {
-  
   constructor() {
     if (smsConfig.provider === 'twilio') {
       this.client = twilio(smsConfig.accountSid, smsConfig.authToken);
     }
   }
 
-  // Send SMS via Twilio
+  // ✅ Send SMS via Twilio (with HTML-to-text conversion)
   async sendSMS({ to, message }) {
     try {
       if (smsConfig.provider === 'twilio') {
+        const plainTextMessage = convert(message, {
+          wordwrap: false,
+          selectors: [
+            { selector: 'a', options: { hideLinkHrefIfSameAsText: true } },
+            { selector: 'img', format: 'skip' }
+          ]
+        });
+
         const result = await this.client.messages.create({
-          body: message,
+          body: plainTextMessage,
           from: smsConfig.fromNumber,
           to: to
         });
-        
+
         console.log('SMS sent successfully:', result.sid);
         return result;
       } else {
-        // Add other SMS providers here (e.g., local Egyptian SMS services)
         console.log('SMS provider not configured');
         return null;
       }
@@ -33,12 +39,10 @@ class SMSService {
     }
   }
 
-  // Format phone number for Egypt
+  // ✅ Format phone number for Egypt
   formatEgyptianPhone(phone) {
-    // Remove any non-digit characters
     phone = phone.replace(/\D/g, '');
-    
-    // Handle Egyptian phone numbers
+
     if (phone.startsWith('01') && phone.length === 11) {
       return `+2${phone}`;
     } else if (phone.startsWith('2') && phone.length === 12) {
@@ -46,15 +50,15 @@ class SMSService {
     } else if (phone.startsWith('+2')) {
       return phone;
     }
-    
+
     return phone;
   }
 
-  // Send bulk SMS
+  // ✅ Send multiple SMS
   async sendBulkSMS(smsList) {
     try {
       const results = [];
-      
+
       for (const smsData of smsList) {
         try {
           const formattedPhone = this.formatEgyptianPhone(smsData.to);
@@ -74,7 +78,6 @@ class SMSService {
       throw error;
     }
   }
-
 }
 
 module.exports = new SMSService();
