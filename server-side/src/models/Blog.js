@@ -18,7 +18,7 @@ const blogSchema = new mongoose.Schema(
       id: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
-        ref: "User", // <--- التعديل هنا: خليها 'User'
+        ref: "User",
       },
       role: {
         type: String,
