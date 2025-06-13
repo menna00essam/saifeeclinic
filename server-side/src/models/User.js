@@ -35,7 +35,8 @@ const userSchema = new mongoose.Schema(
     },
     avatar: {
       type: String,
-      default: "https://images.app.goo.gl/dpS5AtitAcoyECEr5", // Your default avatar URL
+      default:
+        "https://asset.cloudinary.com/dzj7opitz/33e8acf51893d09e40a0940b40394f25",
     },
     doctor_profile: {
       specialization: { type: String },
