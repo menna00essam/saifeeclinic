@@ -22,6 +22,7 @@ function protectMW(req, res, next) {
       return next(new APIError("Token is invalid", 401));
     } else {
       return next(new APIError("Authentication failed.", 401)); // خطأ غير متوقع
+
     }
   }
 }
