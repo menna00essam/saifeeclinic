@@ -9,24 +9,24 @@ router.get("/", (req, res) => {
   res.send("Admin route works!");
 });
 
-router.get("/doctors", auth, allowedTo("admin"), adminController.getAllDoctors);
-router.post("/doctors", auth, allowedTo("admin"), adminController.addDoctor);
+router.get("/doctors", auth, allowedTo("Admin"), adminController.getAllDoctors);
+router.post("/doctors", auth, allowedTo("Admin"), adminController.addDoctor);
 router.delete(
   "/doctors/:doctorId",
   auth,
-  allowedTo("admin"),
+  allowedTo("Admin"),
   adminController.deleteDoctor
 );
 router.get(
   "/patients",
   auth,
-  allowedTo("admin"),
+  allowedTo("Admin"),
   adminController.getAllPatients
 );
 
-router.post("/blog", auth, allowedTo("admin"), blogController.addBlog);
-router.get("/blog", auth, allowedTo("admin"), blogController.getAllBlogs);
-router.get("/blog/:id", auth, allowedTo("admin"), blogController.getBlogById);
-router.delete("/blog/:id", auth, allowedTo("admin"), blogController.deleteBlog);
+router.post("/blog", auth, allowedTo("Admin"), blogController.addBlog);
+router.get("/blog", auth, allowedTo("Admin"), blogController.getAllBlogs);
+router.get("/blog/:id", auth, allowedTo("Admin"), blogController.getBlogById);
+router.delete("/blog/:id", auth, allowedTo("Admin"), blogController.deleteBlog);
 
 module.exports = router;
