@@ -9,6 +9,9 @@ router.get('/unread-count', auth, notificationController.getUnreadCount);
 router.patch('/:notificationId/read', auth, notificationController.markAsRead);
 router.patch('/mark-all-read', auth, notificationController.markAllAsRead);
 
-router.post('/send-to-user', auth, allowedTo('admin'), notificationController.sendToUser);
-router.post('/send-to-role', auth, allowedTo('admin'), notificationController.sendToRole);
-router.get('/stats', auth, allowedTo('admin'), notificationController.getStats);
+router.post('/send-to-user', auth, allowedTo('Admin'), notificationController.sendToUser);
+router.post('/send-to-role', auth, allowedTo('Admin'), notificationController.sendToRole);
+router.get('/stats', auth, allowedTo('Admin'), notificationController.getStats);
+
+module.exports = router;
+
