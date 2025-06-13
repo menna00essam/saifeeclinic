@@ -12,3 +12,5 @@ router.patch('/mark-all-read', auth, notificationController.markAllAsRead);
 router.post('/send-to-user', auth, allowedTo('admin'), notificationController.sendToUser);
 router.post('/send-to-role', auth, allowedTo('admin'), notificationController.sendToRole);
 router.get('/stats', auth, allowedTo('admin'), notificationController.getStats);
+
+module.exports = router;

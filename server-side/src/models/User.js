@@ -28,16 +28,12 @@ const userSchema = new mongoose.Schema(
       required: true,
       minlength: 6,
       select: false,
-
     },
     role: {
       type: String,
       enum: ["Admin", "Doctor", "Patient"],
       required: true,
     },
-    doctor_profile: {
-      specialization: { type: String },
-      license_number: { type: String, unique: true, sparse: true },
     avatar: {
       type: String,
       default:
@@ -45,7 +41,7 @@ const userSchema = new mongoose.Schema(
     },
     doctor_profile: {
       specialization: { type: String },
-      license_number: { type: String, unique: true },
+      license_number: { type: String, unique: true, sparse: true },
       experience: { type: Number, min: 0 },
       qualifications: [
         {
@@ -92,9 +88,8 @@ const userSchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: true,
+    timestamps: true, // Correct placement in schema options
   }
 );
-
 
 module.exports = mongoose.model("User", userSchema);
