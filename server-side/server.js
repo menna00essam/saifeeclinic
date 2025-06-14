@@ -9,9 +9,9 @@ const PORT = process.env.PORT || 5000;
 
 connectDB();
 EmailJobs.startAllJobs();
-console.log("Server started with notification jobs running...");
-console.log("EMAIL_USER:", process.env.EMAIL_USER);
-console.log("EMAIL_PASS:", process.env.EMAIL_PASS);
+// console.log("Server started with notification jobs running...");
+// console.log("EMAIL_USER:", process.env.EMAIL_USER);
+// console.log("EMAIL_PASS:", process.env.EMAIL_PASS);
 
 app.use(errorHandling);
 
