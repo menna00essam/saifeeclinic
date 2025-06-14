@@ -1,5 +1,5 @@
-const jwt = require('jsonwebtoken');
-const APIError = require('../utils/errors/APIError');
+const jwt = require("jsonwebtoken");
+const APIError = require("../utils/errors/APIError"); 
 
 function protectMW(req, res, next) {
     try {
@@ -19,7 +19,7 @@ function protectMW(req, res, next) {
         } else {
             throw new APIError("Authentication faild.", 401);
         }
-    }
+  }
 }
 
 module.exports = protectMW;

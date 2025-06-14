@@ -1,3 +1,4 @@
+
 const APIError = require("../utils/errors/APIError");
 
 function roleAuth(...allowedRoles) {
@@ -11,3 +12,25 @@ function roleAuth(...allowedRoles) {
 }
 
 module.exports = roleAuth;
+
+/*
+const AppError = require("../utils/errors/APIError");
+const httpStatusText = require("../utils/httpStatusText");
+
+const allowedTo = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return next(
+        new AppError(
+          "You are not allowed to access this route, unauthorized user",
+          403,
+          httpStatusText.ERROR
+        )
+      );
+    }
+    next();
+  };
+};
+
+module.exports = allowedTo;
+*/
