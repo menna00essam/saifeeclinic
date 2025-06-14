@@ -1,11 +1,11 @@
 // routes/doctorRoutes.js
 const express = require("express");
 const router = express.Router();
-const auth = require("../middleware/auth"); // <--- السطر ده مهم جداً تضيفيه هنا
 const upload = require("../middleware/upload"); // استدعي Multer هنا
 const blogController = require("../controllers/doctor/blogController"); // استدعي Blog Controller
 const { check } = require("express-validator"); // <--- السطر ده
 const prescriptionController = require("../controllers/doctor/prescriptionController");
+const auth = require("../middleware/protectMW.js");
 
 // routes/doctorRoutes.js
 const appointmentController = require("../controllers/doctor/appointmentController"); // استدعاء الـ controller الجديد
