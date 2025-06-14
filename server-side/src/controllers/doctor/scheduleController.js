@@ -56,16 +56,14 @@ exports.updateDoctorSchedule = async (req, res) => {
     }
 };
 
-// @desc    Get doctor's schedule
-// @route   GET /api/doctors/schedule
-// @access  Private (Doctor only)
+
 exports.getDoctorSchedule = async (req, res) => {
     try {
         const doctorId = req.user.id;
         const schedule = await DoctorSchedule.findOne({ doctor_id: doctorId });
 
         if (!schedule) {
-            // لو مفيش schedule خالص، نرجع object فاضي أو array فاضي للـ slots
+         
             return res.status(200).json({ doctor_id: doctorId, available_slots: [] });
         }
 

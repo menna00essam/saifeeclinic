@@ -96,7 +96,7 @@ exports.getDoctorPrescriptions = async (req, res) => {
     }
 
     const prescriptions = await Prescription.find(query)
-      .populate("patient_id", "first_name last_name email phone") // still populate to get other user details for response
+      .populate("patient_id", "first_name last_name email phone") 
       .populate(
         "appointment_id",
         "appointment_date status patient_info doctor_info"
@@ -115,9 +115,9 @@ exports.updatePrescription = async (req, res) => {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { id } = req.params; // Prescription ID from URL params
-  const { prescription_text } = req.body; // Fields that can be updated
-  const doctor_id = req.user.id; // Doctor ID from auth middleware
+  const { id } = req.params; 
+  const { prescription_text } = req.body; 
+  const doctor_id = req.user.id; 
 
   try {
     let prescription = await Prescription.findById(id);
@@ -138,7 +138,7 @@ exports.updatePrescription = async (req, res) => {
       prescription.prescription_text = prescription_text;
     }
 
-    await prescription.save(); // Save the updated prescription
+    await prescription.save(); 
 
     res.json({ message: "Prescription updated successfully", prescription });
   } catch (err) {
