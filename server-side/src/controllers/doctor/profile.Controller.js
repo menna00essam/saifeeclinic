@@ -1,4 +1,3 @@
-// controllers/doctorProfileController.js
 const User = require("../../models/User");
 const bcrypt = require("bcryptjs");
 const multer = require("multer");
@@ -7,10 +6,9 @@ const cloudinary = require("../../config/cloudinary");
 const storage = multer.memoryStorage(); 
 
 const checkFileType = (req, file, cb) => {
-  // <--- أضفنا `req` هنا
   console.log("-----------------------------------------");
   console.log("Inside checkFileType:");
-  console.log("Req object in checkFileType:", req.body); // Check if req.body has anything
+  console.log("Req object in checkFileType:", req.body);
   console.log(
     "File object received by checkFileType (should have originalname):",
     file
@@ -19,9 +17,8 @@ const checkFileType = (req, file, cb) => {
 
 
   if (!file || !file.originalname) {
-    // <--- أضيفي هذا التحقق أيضاً
     console.error("File or originalname is missing in checkFileType.");
-    return cb(new Error("No file or invalid file name provided."), false); // False indicates rejection
+    return cb(new Error("No file or invalid file name provided."), false); 
   }
 
   const filetypes = /jpeg|jpg|png|gif/;
@@ -39,7 +36,6 @@ const checkFileType = (req, file, cb) => {
 };
 
 const profileImageUploader = multer({
-  // <--- غيرنا الاسم عشان يكون أوضح
   storage: storage, // <--- استخدمي الـ storage الجديد
   limits: { fileSize: 5 * 1024 * 1024 }, // <--- زيادة الحجم لـ 5MB (تقدري تغيريه)
   fileFilter: checkFileType,
@@ -140,14 +136,7 @@ exports.updateDoctorPassword = async (req, res) => {
 
 
 exports.addDoctorProfileImage = async (req, res) => {
-  // هنا مفيش حاجة اسمها `err` بتيجي مباشرة للـ controller function من Multer،
-  // Multer بيتعامل مع أخطائه بنفسه كـ middleware، أو بيحط الـ error في req.file.error لو انتي عاملة custom handling.
-  // لكن الـ `if (err)` ده هو اللي كان بيعمل Multer callback، وإحنا شيلنا الـ callback خلاص.
-  // Multer دلوقتي بيشتغل قبل ما الـ function دي تتنفذ.
-
-  // لو فيه خطأ في الـ upload بتاع Multer، المفروض إن الـ middleware اللي في الـ route هو اللي هيتولاه
-  // أو هيوقفه قبل ما يوصل لهنا.
-  // لكن احتياطياً، ممكن نعمل check على req.file.error لو الـ middleware بيحطها.
+  
   if (req.file && req.file.error) {
     console.error("Multer error from req.file:", req.file.error);
     return res.status(400).json({ message: req.file.error });
@@ -173,7 +162,6 @@ exports.addDoctorProfileImage = async (req, res) => {
       }
     );
 
-    // حفظ الـ URL بتاع الصورة من Cloudinary في الـ doctor_profile
     if (!doctor.doctor_profile) {
       doctor.doctor_profile = {};
     }

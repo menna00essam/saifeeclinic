@@ -1,4 +1,3 @@
-// server-side/src/controllers/doctor/scheduleController.js
 const DoctorSchedule = require('../../models/DoctorSchedule');
 const { validationResult } = require('express-validator');
 
