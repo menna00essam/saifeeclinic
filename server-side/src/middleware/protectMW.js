@@ -3,7 +3,7 @@ const APIError = require('../utils/errors/APIError');
 
 function protectMW(req, res, next) {
     try {
-        let token = res.headers.authorization;
+        let token = req.headers.authorization;
         if (!token || !token.startsWith('Bearer ')) {
             throw new APIError('No token provided or invalid token format', 401);
         }

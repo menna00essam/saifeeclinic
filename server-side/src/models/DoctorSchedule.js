@@ -5,7 +5,7 @@ const doctorScheduleSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  
+
   available_slots: [{
     weekday: {
       type: String,
@@ -13,14 +13,16 @@ const doctorScheduleSchema = new mongoose.Schema({
       required: true
     },
     start_time: {
-      type: String, 
+      type: String,
       required: true
     },
     end_time: {
-      type: String, 
+      type: String,
       required: true
     }
   }]
 }, {
   timestamps: true
 });
+
+module.exports = mongoose.model('DoctorSchedule', doctorScheduleSchema);

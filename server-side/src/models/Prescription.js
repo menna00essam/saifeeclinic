@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const prescriptionSchema = new mongoose.Schema({
   appointment_id: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Appointment', 
+    ref: 'Appointment',
     required: true
   },
   doctor_id: {
@@ -19,7 +19,7 @@ const prescriptionSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  
+
   appointment_snapshot: {
     appointment_date: Date,
     patient_name: String,
@@ -28,3 +28,5 @@ const prescriptionSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
+
+module.exports = mongoose.model('Prescription', prescriptionSchema);
