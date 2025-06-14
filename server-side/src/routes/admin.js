@@ -10,7 +10,7 @@ router.get("/", (req, res) => {
 });
 
 router.get("/doctors", auth, allowedTo("Admin"), adminController.getAllDoctors);
-router.post("/doctors", auth, allowedTo("Admin"), adminController.addDoctor);
+router.post("/doctors",  adminController.addDoctor);
 router.delete(
   "/doctors/:doctorId",
   auth,
