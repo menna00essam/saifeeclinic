@@ -6,6 +6,7 @@ const upload = require("../middleware/upload");
 const blogController = require("../controllers/doctor/blogController");
 const { check } = require("express-validator");
 const prescriptionController = require("../controllers/doctor/prescriptionController");
+const auth = require("../middleware/protectMW.js");
 
 // routes/doctorRoutes.js
 const appointmentController = require("../controllers/doctor/appointmentController");

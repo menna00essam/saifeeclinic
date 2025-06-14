@@ -12,6 +12,7 @@ const adminRoutes = require("./routes/admin");
 const doctorRoutes = require("./routes/doctor");
 const patientRoutes = require("./routes/patient");
 const notificationRoutes = require("./routes/notifications");
+const upload = require("./routes/upload.route");
 
 // Middleware
 const errorHandling = require("./middleware/errorHandling");
@@ -31,6 +32,7 @@ app.use("/admin", adminRoutes);
 app.use("/doctor", doctorRoutes);
 app.use("/patient", patientRoutes);
 app.use("/notifications", notificationRoutes);
+app.use("/api", upload);
 
 // Global error handler
 app.use(errorHandling);
