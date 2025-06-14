@@ -1,12 +1,10 @@
-// src/controllers/appointment/appointment.controller.js
 const Appointment = require("../../models/Appointment");
 const User = require("../../models/User");
 
 exports.createAppointment = async (req, res) => {
   try {
-    const doctorId = req.user.id; // ID الدكتور اللي عامل login
+    const doctorId = req.user.id; 
 
-    // البيانات المطلوبة من الـ request body بالأسماء الجديدة
     const {
       patient_id,
       appointment_date,
@@ -16,14 +14,12 @@ exports.createAppointment = async (req, res) => {
       doctor_info,
     } = req.body;
 
-    // التحقق من أن البيانات الأساسية موجودة
     if (!patient_id || !appointment_date) {
       return res
         .status(400)
         .json({ message: "Please provide patient ID and appointment date." });
     }
 
-    // التحقق من أن المريض موجود و Role بتاعه Patient
     const existingPatient = await User.findById(patient_id);
     if (!existingPatient || existingPatient.role !== "Patient") {
       return res
@@ -31,7 +27,6 @@ exports.createAppointment = async (req, res) => {
         .json({ message: "Patient not found or invalid patient ID." });
     }
 
-    // بناء الـ patient_info من بيانات المريض لو لم يتم توفيرها بالكامل في الـ body
     const finalPatientInfo = patient_info || {
       name: `${existingPatient.first_name || ""} ${
         existingPatient.last_name || ""
@@ -40,10 +35,8 @@ exports.createAppointment = async (req, res) => {
       email: existingPatient.email || "",
     };
 
-    // بناء الـ doctor_info من بيانات الدكتور الذي قام بالدخول
     const existingDoctor = await User.findById(doctorId);
     if (!existingDoctor || existingDoctor.role !== "Doctor") {
-      // هذا الشرط يجب ألا يتم الوصول إليه غالباً لأن الـ token بيضمن أنه دكتور
       return res
         .status(403)
         .json({ message: "Logged-in user is not a valid doctor." });
@@ -52,24 +45,22 @@ exports.createAppointment = async (req, res) => {
       name: `${existingDoctor.first_name || ""} ${
         existingDoctor.last_name || ""
       }`.trim(),
-      specialty: existingDoctor.specialty || "", // Assuming doctor model has specialty
+      specialty: existingDoctor.specialty || "", 
       phone: existingDoctor.phone || "",
     };
 
-    // إنشاء كائن موعد جديد بالأسماء الجديدة للحقول
     const newAppointment = new Appointment({
       doctor_id: doctorId,
       patient_id,
       appointment_date,
-      status: status || "booked", // الحالة الافتراضية 'booked'
-      payment_status: payment_status || "unpaid", // الحالة الافتراضية 'unpaid'
+      status: status || "booked", 
+      payment_status: payment_status || "unpaid", 
       patient_info: finalPatientInfo,
       doctor_info: finalDoctorInfo,
     });
 
     const savedAppointment = await newAppointment.save();
 
-    // لجلب تفاصيل الدكتور والمريض كاملة في الـ response باستخدام populate
     const populatedAppointment = await Appointment.findById(
       savedAppointment._id
     )
@@ -90,8 +81,8 @@ exports.getAppointments = async (req, res) => {
   try {
     const doctorId = req.user.id;
 
-    const page = parseInt(req.query.page) || 1; //   : 1
-    const limit = parseInt(req.query.limit) || 10; //
+    const page = parseInt(req.query.page) || 1; 
+    const limit = parseInt(req.query.limit) || 10; 
 
     const skipIndex = (page - 1) * limit;
 
@@ -99,9 +90,9 @@ exports.getAppointments = async (req, res) => {
       doctor_id: doctorId,
       is_deleted: false,
     })
-      .sort({ appointment_date: -1 }) //
-      .skip(skipIndex) //
-      .limit(limit) //
+      .sort({ appointment_date: -1 })
+      .skip(skipIndex)
+      .limit(limit)
       .populate("doctor_id", "first_name last_name email specialty phone")
       .populate("patient_id", "first_name last_name email phone");
 
@@ -130,7 +121,7 @@ exports.getAppointmentById = async (req, res) => {
     const appointment = await Appointment.findOne({
       _id: req.params.id,
       is_deleted: false,
-    }) // <--- تعديل
+    })
       .populate("doctor_id", "first_name last_name specialty")
       .populate("patient_id", "first_name last_name");
 
@@ -210,8 +201,7 @@ exports.deleteAppointment = async (req, res) => {
       });
     }
 
-    // Soft Delete
-    appointment.is_deleted = true; //
+    appointment.is_deleted = true;
 
     await appointment.save();
 

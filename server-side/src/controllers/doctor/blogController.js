@@ -1,4 +1,3 @@
-// src/controllers/blog/blog.controller.js
 const Blog = require("../../models/Blog");
 const User = require("../../models/User");
 const cloudinary = require("../../config/cloudinary");
