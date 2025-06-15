@@ -70,7 +70,6 @@ exports.createPrescription = async (req, res) => {
     res.status(500).send("Server Error");
   }
 };
-
 exports.getDoctorPrescriptions = async (req, res) => {
   const doctor_id = req.user.id;
   const { patientId } = req.query;

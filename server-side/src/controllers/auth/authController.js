@@ -1,6 +1,3 @@
-
-
-
 const userModel = require("../../models/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -65,30 +62,26 @@ const signup = asyncWrapper(async (req, res, next) => {
     last_name: newUser.last_name,
     phone: newUser.phone,
     role: newUser.role,
-    thumbnail: newUser.thumbnail, 
+    avatar: newUser.avatar,
   });
 
- 
   res.status(201).json({
     status: httpStatusText.SUCCESS,
     message: "User signed up successfully",
     data: {
-     
       token: token,
       user: {
-  
         _id: newUser._id,
         email: newUser.email,
         first_name: newUser.first_name,
         last_name: newUser.last_name,
         phone: newUser.phone,
         role: newUser.role,
-        thumbnail: newUser.thumbnail,
+        avatar: newUser.avatar,
       },
     },
   });
 });
-
 
 // POST /login
 const login = asyncWrapper(async (req, res, next) => {
@@ -130,7 +123,7 @@ const login = asyncWrapper(async (req, res, next) => {
     last_name: user.last_name,
     phone: user.phone,
     role: user.role,
-    thumbnail: user.thumbnail, 
+    thumbnail: user.thumbnail,
   });
 
   console.log("[LOGIN] User logged in:", email);
@@ -138,16 +131,18 @@ const login = asyncWrapper(async (req, res, next) => {
   res.status(200).json({
     status: httpStatusText.SUCCESS,
     message: "Logged in successfully",
-    data: {token: token,
-      user: { 
+    data: {
+      token: token,
+      user: {
         _id: user._id,
         email: user.email,
         first_name: user.first_name,
         last_name: user.last_name,
         phone: user.phone,
         role: user.role,
-        thumbnail: user.thumbnail},},
-        
+        thumbnail: user.thumbnail,
+      },
+    },
   });
 });
 
