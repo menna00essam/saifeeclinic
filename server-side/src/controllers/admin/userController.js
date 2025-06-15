@@ -10,12 +10,15 @@ const getAllPatients = async (req, res) => {
     const query = {
       role: "Patient",
       is_deleted: false,
-      $or: [
+    };
+
+    if (search.trim()) {
+      query.$or = [
         { first_name: { $regex: search, $options: "i" } },
         { last_name: { $regex: search, $options: "i" } },
         { email: { $regex: search, $options: "i" } },
-      ],
-    };
+      ];
+    }
 
     const [patients, total] = await Promise.all([
       User.find(query)
@@ -47,6 +50,7 @@ const getAllPatients = async (req, res) => {
     );
   }
 };
+
 // Get all doctors
 const getAllDoctors = async (req, res) => {
   try {
