@@ -4,19 +4,19 @@ const emailService = require('./emailService');
 const smsService = require('./smsService');
 const { notificationTemplates } = require('../utils/templates');
 
+const MAX_RETRIES = 3;
+
 class NotificationService {
-  
-  // Create notification in database
+
   async createNotification(notificationData) {
     try {
       const notification = new Notification(notificationData);
       await notification.save();
-      
-      // Process immediately if not scheduled
+
       if (notification.scheduled_at <= new Date()) {
         await this.processNotification(notification._id);
       }
-      
+
       return notification;
     } catch (error) {
       console.error('Error creating notification:', error);
@@ -24,45 +24,50 @@ class NotificationService {
     }
   }
 
-  // Send notification to specific user
-  async sendToUser(userId, category, data = {}, type = 'email') {
+  async sendToUser(userId, category, data = {}, types = ['email']) {
     try {
       const user = await User.findById(userId);
-      if (!user) {
-        throw new Error('User not found');
-      }
+      if (!user) throw new Error('User not found');
 
       const template = notificationTemplates[category];
-      if (!template) {
-        throw new Error(`Template not found for category: ${category}`);
+      if (!template) throw new Error(`Template not found for category: ${category}`);
+
+      const notifications = [];
+
+      for (const type of types) {
+        const messageContent = type === 'sms' && template.sms
+          ? template.sms(data)
+          : template.message(data);
+
+        const notification = await this.createNotification({
+          user_id: userId,
+          type,
+          category,
+          title: template.title(data),
+          message: messageContent,
+          data,
+          priority: template.priority || 'medium'
+        });
+
+        await this.processNotification(notification._id);
+        notifications.push(notification);
       }
 
-      const notification = await this.createNotification({
-        user_id: userId,
-        type,
-        category,
-        title: template.title(data),
-        message: template.message(data),
-        data,
-        priority: template.priority || 'medium'
-      });
-
-      return notification;
+      return notifications;
     } catch (error) {
       console.error('Error sending notification to user:', error);
       throw error;
     }
   }
 
-  // Send notification to multiple users by role
-  async sendToRole(role, category, data = {}, type = 'email') {
+  async sendToRole(role, category, data = {}, types = ['email']) {
     try {
       const users = await User.find({ role, is_active: true });
       const notifications = [];
 
       for (const user of users) {
-        const notification = await this.sendToUser(user._id, category, data, type);
-        notifications.push(notification);
+        const userNotifications = await this.sendToUser(user._id, category, data, types);
+        notifications.push(...userNotifications);
       }
 
       return notifications;
@@ -72,13 +77,10 @@ class NotificationService {
     }
   }
 
-  // Process notification (actually send it)
   async processNotification(notificationId) {
     try {
       const notification = await Notification.findById(notificationId).populate('user_id');
-      if (!notification || notification.status !== 'pending') {
-        return;
-      }
+      if (!notification || notification.status !== 'pending') return;
 
       let result = false;
 
@@ -93,21 +95,18 @@ class NotificationService {
           result = await this.sendPushNotification(notification);
           break;
         case 'in_app':
-          result = true; // In-app notifications are stored in DB only
+          result = true;
           break;
       }
 
-      // Update notification status
       notification.status = result ? 'sent' : 'failed';
       notification.sent_at = result ? new Date() : null;
       if (!result) notification.retry_count += 1;
-      
-      await notification.save();
 
+      await notification.save();
       return result;
     } catch (error) {
       console.error('Error processing notification:', error);
-      // Update failed status
       await Notification.findByIdAndUpdate(notificationId, {
         status: 'failed',
         $inc: { retry_count: 1 }
@@ -116,7 +115,6 @@ class NotificationService {
     }
   }
 
-  // Send email notification
   async sendEmail(notification) {
     try {
       const emailData = {
@@ -134,7 +132,6 @@ class NotificationService {
     }
   }
 
-  // Send SMS notification
   async sendSMS(notification) {
     try {
       if (!notification.user_id.phone) {
@@ -153,10 +150,8 @@ class NotificationService {
     }
   }
 
-  // Send push notification (placeholder - implement with your push service)
   async sendPushNotification(notification) {
     try {
-      // Implement with Firebase FCM, OneSignal, etc.
       console.log('Push notification sent:', notification.title);
       return true;
     } catch (error) {
@@ -165,15 +160,14 @@ class NotificationService {
     }
   }
 
-  // Get user notifications with pagination
   async getUserNotifications(userId, page = 1, limit = 20, unreadOnly = false) {
     try {
       const query = { user_id: userId };
       if (unreadOnly) query.is_read = false;
 
       const notifications = await Notification.find(query)
-        .sort({ created_at: -1 })
-        .limit(limit * 1)
+        .sort({ createdAt: -1 })
+        .limit(limit)
         .skip((page - 1) * limit);
 
       const total = await Notification.countDocuments(query);
@@ -191,13 +185,12 @@ class NotificationService {
     }
   }
 
-  // Mark notification as read
   async markAsRead(notificationId, userId) {
     try {
       const notification = await Notification.findOneAndUpdate(
         { _id: notificationId, user_id: userId },
-        { 
-          is_read: true, 
+        {
+          is_read: true,
           read_at: new Date(),
           status: 'read'
         },
@@ -210,13 +203,12 @@ class NotificationService {
     }
   }
 
-  // Mark all notifications as read for user
   async markAllAsRead(userId) {
     try {
       await Notification.updateMany(
         { user_id: userId, is_read: false },
-        { 
-          is_read: true, 
+        {
+          is_read: true,
           read_at: new Date(),
           status: 'read'
         }
@@ -228,7 +220,6 @@ class NotificationService {
     }
   }
 
-  // Get unread count for user
   async getUnreadCount(userId) {
     try {
       return await Notification.countDocuments({
@@ -241,12 +232,11 @@ class NotificationService {
     }
   }
 
-  // Retry failed notifications
   async retryFailedNotifications() {
     try {
       const failedNotifications = await Notification.find({
         status: 'failed',
-        retry_count: { $lt: { $field: 'max_retries' } },
+        retry_count: { $lt: MAX_RETRIES },
         scheduled_at: { $lte: new Date() }
       });
 
@@ -261,14 +251,13 @@ class NotificationService {
     }
   }
 
-  // Clean old notifications
   async cleanupOldNotifications(daysOld = 30) {
     try {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - daysOld);
 
       const result = await Notification.deleteMany({
-        created_at: { $lt: cutoffDate },
+        createdAt: { $lt: cutoffDate },
         status: { $in: ['sent', 'read'] }
       });
 
