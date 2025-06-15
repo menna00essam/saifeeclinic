@@ -66,6 +66,19 @@ const notificationTemplates = {
     priority: 'medium'
   },
 
+  schedule_updated: {
+    title: (data) => `Schedule Updated`,
+    message: (data) => `
+      <h2>Schedule Update</h2>
+      <p>Dear ${data.patientName || data.doctorName},</p>
+      <p>An appointment schedule has been updated:</p>
+      ${data.oldDate ? `<p><strong>Previous Date:</strong> ${data.oldDate} at ${data.oldTime}</p>` : ''}
+      <p><strong>New Date:</strong> ${data.newDate} at ${data.newTime}</p>
+      ${data.patientName && data.doctorName ? `<p><strong>Patient:</strong> ${data.patientName}</p><p><strong>Doctor:</strong> Dr. ${data.doctorName}</p>` : ''}
+    `,
+    priority: 'high'
+  },
+
   // Doctor notifications
   new_appointment: {
     title: (data) => `New Appointment Booked`,
@@ -81,15 +94,21 @@ const notificationTemplates = {
     priority: 'high'
   },
 
-  schedule_updated: {
-    title: (data) => `Schedule Updated`,
+  doctor_schedule_updated: {
+    title: (data) => `Schedule Updated Successfully`,
     message: (data) => `
-      <h2>Schedule Update</h2>
+      <h2>Schedule Update Confirmation</h2>
       <p>Dear Dr. ${data.doctorName},</p>
       <p>Your schedule has been updated successfully.</p>
-      <p>New changes are now active.</p>
+      <p><strong>Available Slots:</strong></p>
+      <ul>
+        ${data.availableSlots.map(slot => 
+          `<li>${slot.weekday}: ${slot.start_time} - ${slot.end_time}</li>`
+        ).join('')}
+      </ul>
+      <p>Your new schedule is now active and patients can book appointments accordingly.</p>
     `,
-    priority: 'low'
+    priority: 'medium'
   },
 
   patient_rating: {
@@ -102,6 +121,23 @@ const notificationTemplates = {
       ${data.review ? `<p><strong>Review:</strong> ${data.review}</p>` : ''}
     `,
     priority: 'low'
+  },
+
+  schedule_conflict: {
+    title: (data) => `Schedule Conflict Warning`,
+    message: (data) => `
+      <h2>Schedule Conflict Alert</h2>
+      <p>Dear Dr. ${data.doctorName},</p>
+      <p>There is a potential conflict with your schedule update:</p>
+      <p><strong>Existing Appointments:</strong></p>
+      <ul>
+        ${data.conflictingAppointments.map(appointment => 
+          `<li>${appointment.patientName} - ${appointment.date} at ${appointment.time}</li>`
+        ).join('')}
+      </ul>
+      <p>Please review these appointments and contact affected patients if necessary.</p>
+    `,
+    priority: 'high'
   },
 
   // Admin notifications
@@ -130,7 +166,31 @@ const notificationTemplates = {
     priority: 'medium'
   },
 
-  // General notifications
+  doctor_profile_approved: {
+    title: (data) => `Doctor Profile Approved`,
+    message: (data) => `
+      <h2>Profile Approved</h2>
+      <p>Dear Dr. ${data.doctorName},</p>
+      <p>Your doctor profile has been approved by the administration.</p>
+      <p>You can now start accepting appointments and managing your schedule.</p>
+      <p><strong>Specialization:</strong> ${data.specialization}</p>
+    `,
+    priority: 'high'
+  },
+
+  doctor_profile_rejected: {
+    title: (data) => `Doctor Profile Requires Review`,
+    message: (data) => `
+      <h2>Profile Review Required</h2>
+      <p>Dear Dr. ${data.doctorName},</p>
+      <p>Your doctor profile requires additional information or verification.</p>
+      <p><strong>Reason:</strong> ${data.reason}</p>
+      <p>Please update your profile and resubmit for approval.</p>
+    `,
+    priority: 'high'
+  },
+
+  // General notifications  
   password_reset: {
     title: (data) => `Password Reset Request`,
     message: (data) => `
@@ -154,6 +214,72 @@ const notificationTemplates = {
       <p><strong>Transaction ID:</strong> ${data.transactionId}</p>
     `,
     priority: 'medium'
+  },
+
+  payment_failed: {
+    title: (data) => `Payment Failed`,
+    message: (data) => `
+      <h2>Payment Failed</h2>
+      <p>Dear ${data.patientName},</p>
+      <p>Your payment could not be processed:</p>
+      <p><strong>Amount:</strong> ${data.amount} EGP</p>
+      <p><strong>Reason:</strong> ${data.reason}</p>
+      <p>Please try again or contact support for assistance.</p>
+    `,
+    priority: 'high'
+  },
+
+  account_verification: {
+    title: (data) => `Verify Your Account`,
+    message: (data) => `
+      <h2>Account Verification</h2>
+      <p>Dear ${data.name},</p>
+      <p>Please verify your account by clicking the link below:</p>
+      <p><a href="${data.verificationLink}">Verify Account</a></p>
+      <p>This link expires in 24 hours.</p>
+    `,
+    priority: 'high'
+  },
+
+  welcome_message: {
+    title: (data) => `Welcome to Our Platform`,
+    message: (data) => `
+      <h2>Welcome!</h2>
+      <p>Dear ${data.name},</p>
+      <p>Welcome to our healthcare platform. We're excited to have you join us!</p>
+      <p>As a ${data.role}, you now have access to:</p>
+      <ul>
+        ${data.features.map(feature => `<li>${feature}</li>`).join('')}
+      </ul>
+      <p>If you have any questions, please don't hesitate to contact our support team.</p>
+    `,
+    priority: 'medium'
+  },
+
+  profile_updated: {
+    title: (data) => `Profile Updated Successfully`,
+    message: (data) => `
+      <h2>Profile Update Confirmation</h2>
+      <p>Dear ${data.name},</p>
+      <p>Your profile has been updated successfully.</p>
+      <p><strong>Updated on:</strong> ${data.updateDate}</p>
+      <p>If you didn't make these changes, please contact support immediately.</p>
+    `,
+    priority: 'low'
+  },
+
+  security_alert: {
+    title: (data) => `Security Alert`,
+    message: (data) => `
+      <h2>Security Alert</h2>
+      <p>Dear ${data.name},</p>
+      <p>We detected unusual activity on your account:</p>
+      <p><strong>Activity:</strong> ${data.activity}</p>
+      <p><strong>Time:</strong> ${data.time}</p>
+      <p><strong>Location:</strong> ${data.location}</p>
+      <p>If this wasn't you, please change your password immediately.</p>
+    `,
+    priority: 'high'
   }
 };
 
