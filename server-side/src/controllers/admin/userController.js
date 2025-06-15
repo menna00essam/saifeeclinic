@@ -49,7 +49,7 @@ const getAllPatients = async (req, res) => {
     );
   }
 };
-// Get all doctors
+
 const getAllDoctors = async (req, res) => {
   try {
     const { page = 1, limit = 10, search = "", specialization } = req.query;

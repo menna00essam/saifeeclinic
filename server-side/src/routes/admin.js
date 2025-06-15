@@ -9,7 +9,7 @@ router.get("/", (req, res) => {
   res.send("Admin route works!");
 });
 
-router.get("/doctors", auth, allowedTo("Admin"), adminController.getAllDoctors);
+router.get("/doctors", auth, allowedTo(["Admin"]), adminController.getAllDoctors);
 router.post("/doctors",  adminController.addDoctor);
 router.delete(
   "/doctors/:doctorId",
@@ -24,7 +24,7 @@ router.get(
   adminController.getAllPatients
 );
 
-router.post("/blog", auth, allowedTo("Admin"), blogController.addBlog);
+router.post("/blog", auth, blogController.addBlog);
 router.get("/blog", auth, allowedTo("Admin"), blogController.getAllBlogs);
 router.get("/blog/:id", auth, allowedTo("Admin"), blogController.getBlogById);
 router.delete("/blog/:id", auth, allowedTo("Admin"), blogController.deleteBlog);
