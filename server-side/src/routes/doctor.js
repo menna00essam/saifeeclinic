@@ -1,25 +1,40 @@
 // routes/doctorRoutes.js
 const express = require("express");
 const router = express.Router();
-const upload = require("../middleware/upload");
+
 const blogController = require("../controllers/doctor/blogController");
 const { check } = require("express-validator");
 const prescriptionController = require("../controllers/doctor/prescriptionController");
 const auth = require("../middleware/protectMW.js");
+
+const roleAuth = require("../middleware/roleAuth"); //
+const { parser } = require("../config/cloudinary"); //
 
 // routes/doctorRoutes.js
 const appointmentController = require("../controllers/doctor/appointmentController");
 
 const doctorProfileController = require("../controllers/doctor/profile.Controller");
 const doctorScheduleController = require("../controllers/doctor/scheduleController");
+const doctorPatientController = require("../controllers/doctor/patientController"); // <-- أضيفي هذا السطر
 
-router.get("/profile", auth, doctorProfileController.getDoctorProfile);
+router.get(
+  "/profile",
+  auth,
+  roleAuth("Doctor"),
+  doctorProfileController.getDoctorProfile
+);
 
-router.put("/profile", auth, doctorProfileController.editDoctorProfile);
+router.put(
+  "/profile",
+  auth,
+  roleAuth("Doctor"),
+  doctorProfileController.editDoctorProfile
+);
 
 router.put(
   "/profile/password",
   auth,
+  roleAuth("Doctor"),
 
   doctorProfileController.updateDoctorPassword
 );
@@ -27,36 +42,65 @@ router.put(
 router.post(
   "/profile/image",
   auth,
-
-  doctorProfileController.uploadProfileImage,
+  roleAuth("Doctor"),
+  parser.single("image"),
   doctorProfileController.addDoctorProfileImage
 );
 
-router.post("/appointments", auth, appointmentController.createAppointment);
+router.post(
+  "/appointments",
+  auth,
+  roleAuth("Doctor"),
+  appointmentController.createAppointment
+);
 
-router.get("/appointments", auth, appointmentController.getAppointments);
+router.get(
+  "/appointments",
+  auth,
+  roleAuth("Doctor"),
+  appointmentController.getAppointments
+);
 
-router.get("/appointments/:id", auth, appointmentController.getAppointmentById);
+router.get(
+  "/appointments/:id",
+  auth,
+  roleAuth("Doctor"),
+  appointmentController.getAppointmentById
+);
 
-router.put("/appointments/:id", auth, appointmentController.updateAppointment);
+router.put(
+  "/appointments/:id",
+  auth,
+  roleAuth("Doctor"),
+  appointmentController.updateAppointment
+);
 
 router.delete(
   "/appointments/:id",
   auth,
+  roleAuth("Doctor"),
   appointmentController.deleteAppointment
 );
 
 router.post(
   "/blog",
   auth,
-  upload.single("image"),
+  roleAuth("Doctor"),
+
+  parser.single("image"),
   blogController.createBlogPost
 );
 
-router.get("/blog", auth, blogController.getDoctorBlogPosts);
+router.get(
+  "/blog",
+  auth,
+  roleAuth("Doctor"),
+  blogController.getDoctorBlogPosts
+);
 router.put(
   "/schedule",
   auth,
+  roleAuth("Doctor"),
   [
     // Validate available_slots if provided
     check("available_slots")
@@ -87,10 +131,16 @@ router.put(
   doctorScheduleController.updateDoctorSchedule
 );
 
-router.get("/schedule", auth, doctorScheduleController.getDoctorSchedule);
+router.get(
+  "/schedule",
+  auth,
+  roleAuth("Doctor"),
+  doctorScheduleController.getDoctorSchedule
+);
 router.post(
   "/prescriptions",
   auth,
+  roleAuth("Doctor"),
   [
     check("appointment_id", "Appointment ID is required")
       .not()
@@ -105,11 +155,13 @@ router.post(
 router.get(
   "/prescriptions",
   auth,
+  roleAuth("Doctor"),
   prescriptionController.getDoctorPrescriptions
 );
 router.patch(
-  "/prescriptions/:id",
+  "/prescriptions/:prescriptionId",
   auth,
+  roleAuth("Doctor"),
   [
     check("prescription_text")
       .optional()
@@ -119,5 +171,24 @@ router.patch(
   ],
   prescriptionController.updatePrescription
 );
-
+// --- Doctor's Patient Management Routes ---
+router.get(
+  "/my-patients",
+  auth,
+  roleAuth("Doctor"),
+  doctorPatientController.getAllMyPatients
+);
+router.get(
+  "/my-patients/:patientId",
+  auth,
+  roleAuth("Doctor"),
+  doctorPatientController.getPatientDetails
+);
+router.put(
+  
+  "/my-patients/:patientId/profile", // استخدمنا "/profile" عشان يكون الـ URL أوضح ويميزه عن إضافة الملاحظات لو رجعتي لها
+  auth,
+  roleAuth("Doctor"),
+  doctorPatientController.updatePatientProfile
+);
 module.exports = router;
