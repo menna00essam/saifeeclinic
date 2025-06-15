@@ -5,7 +5,7 @@ const { validationResult } = require('express-validator');
 const { responseHandler } = require('../../utils/responseHandler');
 
 // Import notification services
-const notificationService = require('../../services/notificationService');
+const notificationService = require("../../services/notificationService");
 
 exports.updateDoctorSchedule = async (req, res) => {
     const errors = validationResult(req);

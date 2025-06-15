@@ -2,7 +2,7 @@ const { validationResult } = require("express-validator");
 const Prescription = require("../../models/Prescription");
 const Appointment = require("../../models/Appointment");
 const User = require("../../models/User");
-const notificationService = require("../services/notificationService");
+const notificationService = require("../../services/notificationService");
 
 exports.createPrescription = async (req, res) => {
   const errors = validationResult(req);

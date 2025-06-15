@@ -1,7 +1,7 @@
 const Appointment = require("../../models/Appointment");
 const User = require("../../models/User");
-const notificationService = require("../services/notificationService");
-const NotificationHelpers = require("../utils/notificationHelpers");
+const notificationService = require("../../services/notificationService");
+const NotificationHelpers = require("../../utils/notificationHelpers");
 
 exports.createAppointment = async (req, res) => {
   try {
