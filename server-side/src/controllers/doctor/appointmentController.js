@@ -5,7 +5,7 @@ const NotificationHelpers = require("../../utils/notificationHelpers");
 
 exports.createAppointment = async (req, res) => {
   try {
-    const doctorId = req.user.id; 
+    const doctorId = req.user._id;
 
     const {
       patient_id,
@@ -47,7 +47,7 @@ exports.createAppointment = async (req, res) => {
       name: `${existingDoctor.first_name || ""} ${
         existingDoctor.last_name || ""
       }`.trim(),
-      specialty: existingDoctor.specialty || "", 
+      specialty: existingDoctor.specialty || "",
       phone: existingDoctor.phone || "",
     };
 
@@ -55,8 +55,8 @@ exports.createAppointment = async (req, res) => {
       doctor_id: doctorId,
       patient_id,
       appointment_date,
-      status: status || "booked", 
-      payment_status: payment_status || "unpaid", 
+      status: status || "booked",
+      payment_status: payment_status || "unpaid",
       patient_info: finalPatientInfo,
       doctor_info: finalDoctorInfo,
     });
@@ -74,34 +74,37 @@ exports.createAppointment = async (req, res) => {
       // Notify patient about appointment booking
       await notificationService.sendToUser(
         patient_id,
-        'appointment_booked',
+        "appointment_booked",
         {
           patientName: finalPatientInfo.name,
           doctorName: finalDoctorInfo.name,
           appointmentDate: new Date(appointment_date).toDateString(),
           appointmentTime: new Date(appointment_date).toLocaleTimeString(),
           specialty: finalDoctorInfo.specialty,
-          fee: savedAppointment.amount || 'N/A'
+          fee: savedAppointment.amount || "N/A",
         },
-        'email'
+        "email"
       );
 
       // Notify doctor about new appointment
       await notificationService.sendToUser(
         doctorId,
-        'new_appointment',
+        "new_appointment",
         {
           patientName: finalPatientInfo.name,
           doctorName: finalDoctorInfo.name,
           appointmentDate: new Date(appointment_date).toDateString(),
-          appointmentTime: new Date(appointment_date).toLocaleTimeString()
+          appointmentTime: new Date(appointment_date).toLocaleTimeString(),
         },
-        'email'
+        "email"
       );
 
-      console.log('Appointment notifications sent successfully');
+      console.log("Appointment notifications sent successfully");
     } catch (notificationError) {
-      console.error('Error sending appointment notifications:', notificationError);
+      console.error(
+        "Error sending appointment notifications:",
+        notificationError
+      );
       // Don't fail the appointment creation if notifications fail
     }
 
@@ -117,10 +120,10 @@ exports.createAppointment = async (req, res) => {
 
 exports.getAppointments = async (req, res) => {
   try {
-    const doctorId = req.user.id;
+    const doctorId = req.user._id;
 
-    const page = parseInt(req.query.page) || 1; 
-    const limit = parseInt(req.query.limit) || 10; 
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
 
     const skipIndex = (page - 1) * limit;
 
@@ -155,7 +158,7 @@ exports.getAppointments = async (req, res) => {
 
 exports.getAppointmentById = async (req, res) => {
   try {
-    const doctorId = req.user.id;
+    const doctorId = req.user._id;
     const appointment = await Appointment.findOne({
       _id: req.params.id,
       is_deleted: false,
@@ -183,7 +186,7 @@ exports.getAppointmentById = async (req, res) => {
 
 exports.updateAppointment = async (req, res) => {
   try {
-    const doctorId = req.user.id;
+    const doctorId = req.user._id;
 
     const {
       patient_id,
@@ -225,49 +228,60 @@ exports.updateAppointment = async (req, res) => {
     // Send notifications based on status changes
     if (status && status !== oldStatus) {
       try {
-        const patientName = appointment.patient_info?.name || 
+        const patientName =
+          appointment.patient_info?.name ||
           `${appointment.patient_id.first_name} ${appointment.patient_id.last_name}`;
-        const doctorName = appointment.doctor_info?.name || 
+        const doctorName =
+          appointment.doctor_info?.name ||
           `${appointment.doctor_id.first_name} ${appointment.doctor_id.last_name}`;
 
         const notificationData = {
           patientName,
           doctorName,
-          appointmentDate: new Date(appointment.appointment_date).toDateString(),
-          appointmentTime: new Date(appointment.appointment_date).toLocaleTimeString()
+          appointmentDate: new Date(
+            appointment.appointment_date
+          ).toDateString(),
+          appointmentTime: new Date(
+            appointment.appointment_date
+          ).toLocaleTimeString(),
         };
 
         switch (status) {
-          case 'confirmed':
+          case "confirmed":
             await notificationService.sendToUser(
               appointment.patient_id._id,
-              'appointment_confirmed',
+              "appointment_confirmed",
               notificationData,
-              'email'
+              "email"
             );
             break;
 
-          case 'cancelled':
+          case "cancelled":
             await notificationService.sendToUser(
               appointment.patient_id._id,
-              'appointment_cancelled',
+              "appointment_cancelled",
               {
                 ...notificationData,
-                reason: req.body.cancellation_reason || 'No reason provided'
+                reason: req.body.cancellation_reason || "No reason provided",
               },
-              'email'
+              "email"
             );
             break;
 
-          case 'completed':
+          case "completed":
             // You can add a completion notification if needed
-            console.log('Appointment marked as completed');
+            console.log("Appointment marked as completed");
             break;
         }
 
-        console.log(`Appointment status change notification sent: ${oldStatus} -> ${status}`);
+        console.log(
+          `Appointment status change notification sent: ${oldStatus} -> ${status}`
+        );
       } catch (notificationError) {
-        console.error('Error sending status change notification:', notificationError);
+        console.error(
+          "Error sending status change notification:",
+          notificationError
+        );
       }
     }
 
@@ -280,7 +294,7 @@ exports.updateAppointment = async (req, res) => {
 
 exports.deleteAppointment = async (req, res) => {
   try {
-    const doctorId = req.user.id;
+    const doctorId = req.user._id
     let appointment = await Appointment.findById(req.params.id)
       .populate("doctor_id", "first_name last_name")
       .populate("patient_id", "first_name last_name");
@@ -302,26 +316,33 @@ exports.deleteAppointment = async (req, res) => {
 
     // Send cancellation notification to patient
     try {
-      const patientName = appointment.patient_info?.name || 
+      const patientName =
+        appointment.patient_info?.name ||
         `${appointment.patient_id.first_name} ${appointment.patient_id.last_name}`;
-      const doctorName = appointment.doctor_info?.name || 
+      const doctorName =
+        appointment.doctor_info?.name ||
         `${appointment.doctor_id.first_name} ${appointment.doctor_id.last_name}`;
 
       await notificationService.sendToUser(
         appointment.patient_id._id,
-        'appointment_cancelled',
+        "appointment_cancelled",
         {
           patientName,
           doctorName,
-          appointmentDate: new Date(appointment.appointment_date).toDateString(),
-          reason: 'Appointment cancelled by doctor'
+          appointmentDate: new Date(
+            appointment.appointment_date
+          ).toDateString(),
+          reason: "Appointment cancelled by doctor",
         },
-        'email'
+        "email"
       );
 
-      console.log('Appointment cancellation notification sent to patient');
+      console.log("Appointment cancellation notification sent to patient");
     } catch (notificationError) {
-      console.error('Error sending cancellation notification:', notificationError);
+      console.error(
+        "Error sending cancellation notification:",
+        notificationError
+      );
     }
 
     res.json({ message: "Appointment soft-deleted successfully." });
@@ -334,7 +355,7 @@ exports.deleteAppointment = async (req, res) => {
 // Additional method to confirm appointment (if needed)
 exports.confirmAppointment = async (req, res) => {
   try {
-    const doctorId = req.user.id;
+    const doctorId = req.user._id
     const appointmentId = req.params.id;
 
     const appointment = await Appointment.findById(appointmentId)
@@ -347,24 +368,31 @@ exports.confirmAppointment = async (req, res) => {
 
     if (appointment.doctor_id._id.toString() !== doctorId) {
       return res.status(403).json({
-        message: "Access denied: You are not authorized to confirm this appointment.",
+        message:
+          "Access denied: You are not authorized to confirm this appointment.",
       });
     }
 
-    appointment.status = 'confirmed';
+    appointment.status = "confirmed";
     await appointment.save();
 
     // Send confirmation notification
     try {
-      await NotificationHelpers.notifyAppointmentUpdate(appointmentId, 'confirmed');
-      console.log('Appointment confirmation notification sent');
+      await NotificationHelpers.notifyAppointmentUpdate(
+        appointmentId,
+        "confirmed"
+      );
+      console.log("Appointment confirmation notification sent");
     } catch (notificationError) {
-      console.error('Error sending confirmation notification:', notificationError);
+      console.error(
+        "Error sending confirmation notification:",
+        notificationError
+      );
     }
 
-    res.json({ 
-      message: "Appointment confirmed successfully", 
-      appointment 
+    res.json({
+      message: "Appointment confirmed successfully",
+      appointment,
     });
   } catch (error) {
     console.error(error.message);

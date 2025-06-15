@@ -1,10 +1,10 @@
 const Blog = require("../../models/Blog");
 const User = require("../../models/User");
-const cloudinary = require("../../config/cloudinary");
+// const cloudinary = require("../../config/cloudinary");
 
 exports.createBlogPost = async (req, res) => {
   try {
-    const doctorId = req.user.id;
+    const doctorId = req.user._id;
     const doctorRole = req.user.role;
 
     if (doctorRole !== "Doctor") {
@@ -31,18 +31,7 @@ exports.createBlogPost = async (req, res) => {
 
     let imageUrl = null;
 
-    if (req.file) {
-      const result = await cloudinary.uploader.upload(
-        `data:${req.file.mimetype};base64,${req.file.buffer.toString(
-          "base64"
-        )}`,
-        {
-          folder: "blog_images",
-         
-        }
-      );
-      imageUrl = result.secure_url; 
-    }
+    imageUrl = req.file.path;
 
     const newBlogPost = new Blog({
       title,
@@ -80,7 +69,7 @@ exports.createBlogPost = async (req, res) => {
 
 exports.getDoctorBlogPosts = async (req, res) => {
   try {
-    const doctorId = req.user.id;
+    const doctorId = req.user._id;
     const doctorRole = req.user.role;
 
     if (doctorRole !== "Doctor") {
@@ -98,10 +87,10 @@ exports.getDoctorBlogPosts = async (req, res) => {
       "author.role": "doctor",
       isDeleted: false,
     })
-      .sort({ publishedAt: -1 }) 
+      .sort({ publishedAt: -1 })
       .skip(skipIndex)
       .limit(limit)
-      .populate("author.id", "first_name last_name email specialty"); 
+      .populate("author.id", "first_name last_name email specialty");
 
     const totalBlogPosts = await Blog.countDocuments({
       "author.id": doctorId,
@@ -111,7 +100,6 @@ exports.getDoctorBlogPosts = async (req, res) => {
 
     const totalPages = Math.ceil(totalBlogPosts / limit);
 
-   
     res.json({
       currentPage: page,
       totalPages: totalPages,

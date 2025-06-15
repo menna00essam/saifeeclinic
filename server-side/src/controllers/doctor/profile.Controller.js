@@ -1,50 +1,10 @@
 const User = require("../../models/User");
 const bcrypt = require("bcryptjs");
-const multer = require("multer");
-const path = require("path");
-const cloudinary = require("../../config/cloudinary");
-const storage = multer.memoryStorage(); 
 
-const checkFileType = (req, file, cb) => {
-  console.log("-----------------------------------------");
-  console.log("Inside checkFileType:");
-  console.log("Req object in checkFileType:", req.body);
-  console.log(
-    "File object received by checkFileType (should have originalname):",
-    file
-  );
-  console.log("-----------------------------------------");
-
-
-  if (!file || !file.originalname) {
-    console.error("File or originalname is missing in checkFileType.");
-    return cb(new Error("No file or invalid file name provided."), false); 
-  }
-
-  const filetypes = /jpeg|jpg|png|gif/;
-  const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = filetypes.test(file.mimetype);
-
-  if (mimetype && extname) {
-    return cb(null, true);
-  } else {
-    cb(
-      new Error("Error: Images Only! Allowed types: jpeg, jpg, png, gif"),
-      false
-    ); 
-  }
-};
-
-const profileImageUploader = multer({
-  storage: storage, // <--- استخدمي الـ storage الجديد
-  limits: { fileSize: 5 * 1024 * 1024 }, // <--- زيادة الحجم لـ 5MB (تقدري تغيريه)
-  fileFilter: checkFileType,
-}).single("profile_image");
-exports.uploadProfileImage = profileImageUploader; // <--- هنا بنعمل export
 // **********************************************
 
 exports.editDoctorProfile = async (req, res) => {
-  const doctorId = req.user.id;
+  const doctorId = req.user._id;
 
   const {
     first_name,
@@ -108,7 +68,7 @@ exports.editDoctorProfile = async (req, res) => {
 };
 
 exports.updateDoctorPassword = async (req, res) => {
-  const doctorId = req.user.id;
+  const doctorId = req.user._id;
   const { currentPassword, newPassword } = req.body;
 
   try {
@@ -134,54 +94,47 @@ exports.updateDoctorPassword = async (req, res) => {
   }
 };
 
-
+// في ملف profile.Controller.js
 exports.addDoctorProfileImage = async (req, res) => {
-  
-  if (req.file && req.file.error) {
-    console.error("Multer error from req.file:", req.file.error);
-    return res.status(400).json({ message: req.file.error });
-  }
-
-  if (!req.file) {
-    return res.status(400).json({ message: "No file selected." });
-  }
-
   try {
-    const doctor = await User.findById(req.user.id);
+    const doctorId = req.user._id;
+    console.log("Doctor ID from token:", doctorId); // <--- أضيفي هذا السطر
+
+    // هنا بتستلمي معلومات الصورة من req.file بعد ما Multer عمل شغله
+    if (!req.file) {
+      return res.status(400).json({ message: "No image file provided." });
+    }
+
+    const imageUrl = req.file.path; // الـ URL بتاع الصورة من Cloudinary
+    const imagePublicId = req.file.filename; // الـ Public ID بتاع الصورة من Cloudinary
+
+    // Find the doctor profile and update it
+    let doctor = await User.findById(doctorId); // Assuming Doctor is a User model with role 'Doctor'
+
     if (!doctor) {
-      return res.status(404).json({ message: "Doctor not found." });
+      return res.status(404).json({ message: "Doctor profile not found." });
     }
 
-    // رفع الصورة لـ Cloudinary
-    const result = await cloudinary.uploader.upload(
-      `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`,
-      {
-        folder: "doctor_profiles",
-        public_id: `doctor-${req.user.id}`,
-        overwrite: true,
-      }
-    );
+    // هنا بتعدلي الـ profile_image في الـ user model
+    doctor.profile_image = {
+      url: imageUrl,
+      public_id: imagePublicId,
+    };
 
-    if (!doctor.doctor_profile) {
-      doctor.doctor_profile = {};
-    }
-    doctor.doctor_profile.profile_image = result.secure_url;
     await doctor.save();
 
-    res.json({
-      message: "Profile image uploaded successfully",
-      filePath: doctor.doctor_profile.profile_image,
+    res.status(200).json({
+      message: "Profile image uploaded successfully.",
+      profileImage: doctor.profile_image,
     });
-  } catch (err) {
-    console.error("Cloudinary upload or DB save error:", err.message);
+  } catch (error) {
+    console.error("Error adding profile image:", error);
     res.status(500).send("Server Error");
   }
 };
 
-
-
 exports.getDoctorProfile = async (req, res) => {
-  const doctorId = req.user.id;
+  const doctorId = req.user._id;
 
   try {
     const doctor = await User.findById(doctorId).select(
