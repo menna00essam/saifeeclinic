@@ -2,7 +2,7 @@ const notificationService = require('../services/notificationService');
 
 class NotificationHelpers {
 
-  // Helper for appointment-related notifications
+  // Helper for appointment-related notifications 
   static async notifyAppointmentUpdate(appointmentId, action, additionalData = {}) {
     try {
       const Appointment = require('../models/Appointment');
