@@ -13,6 +13,7 @@ const doctorRoutes = require("./routes/doctor");
 const patientRoutes = require("./routes/patient");
 const notificationRoutes = require("./routes/notifications");
 const upload = require("./routes/upload.route");
+const dasboard = require("./routes/dasboard");
 
 // Middleware
 const errorHandling = require("./middleware/errorHandling");
@@ -33,6 +34,7 @@ app.use("/doctor", doctorRoutes);
 app.use("/patient", patientRoutes);
 app.use("/notifications", notificationRoutes);
 app.use("/api", upload);
+app.use("/dashboard", dasboard);
 
 // Global error handler
 app.use(errorHandling);
