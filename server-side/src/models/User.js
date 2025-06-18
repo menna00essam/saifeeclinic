@@ -62,9 +62,16 @@ const userSchema = new mongoose.Schema(
       blogs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Blog" }],
     },
     patient_profile: {
+      address: { type: String },
       date_of_birth: { type: Date },
       gender: { type: String, enum: ["male", "female", "other"] },
       blood_type: { type: String },
+      height: { type: Number },
+      weight: { type: Number }, 
+      national_id: { type: String },
+      insurance_provider: { type: String },
+      insurance_number: { type: String },
+      current_medications: [String],
       allergies: [String],
       chronic_diseases: [String],
       emergency_contact: {
@@ -72,6 +79,7 @@ const userSchema = new mongoose.Schema(
         phone: String,
         relationship: String,
       },
+      notes: { type: String }, 
       appointments: [
         { type: mongoose.Schema.Types.ObjectId, ref: "Appointment" },
       ],
@@ -88,7 +96,7 @@ const userSchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: true, // Correct placement in schema options
+    timestamps: true,
   }
 );
 

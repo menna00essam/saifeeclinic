@@ -186,7 +186,7 @@ router.get(
 );
 router.put(
   
-  "/my-patients/:patientId/profile", // استخدمنا "/profile" عشان يكون الـ URL أوضح ويميزه عن إضافة الملاحظات لو رجعتي لها
+  "/my-patients/:patientId/profile",
   auth,
   roleAuth("Doctor"),
   doctorPatientController.updatePatientProfile

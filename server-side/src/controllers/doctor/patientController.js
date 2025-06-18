@@ -4,10 +4,16 @@ const Prescription = require("../../models/Prescription");
 
 exports.getAllMyPatients = async (req, res) => {
   try {
-    const doctorId = req.user._id; // الـ ID بتاع الدكتور من التوكن
+    const doctorId = req.user._id;
+    
+    // Extract pagination and search parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || "";
+    
+    const skip = (page - 1) * limit;
 
     // 1. Find all unique patient IDs from appointments related to this doctor
-
     const patientIdsFromAppointments = await Appointment.distinct(
       "patient_id",
       {
@@ -36,31 +42,53 @@ exports.getAllMyPatients = async (req, res) => {
       return res.status(200).json({
         message: "No patients found for this doctor yet.",
         patients: [],
+        currentPage: page,
+        totalPages: 0,
+        count: 0,
       });
     }
 
-    // 4. Fetch patient details from the User model
-    const patients = await User.find({
+    // 4. Build search query
+    let searchQuery = {
       _id: { $in: allUniquePatientIds },
       role: "Patient",
       is_deleted: false,
-    }).select(
-      "-password -__v -doctor_profile -is_deleted -createdAt -updatedAt"
-    );
+    };
+
+    // Add search functionality
+    if (search) {
+      searchQuery.$or = [
+        { first_name: { $regex: search, $options: "i" } },
+        { last_name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        { phone: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    // 5. Get total count for pagination
+    const totalPatients = await User.countDocuments(searchQuery);
+    const totalPages = Math.ceil(totalPatients / limit);
+
+    // 6. Fetch patients with pagination
+    const patients = await User.find(searchQuery)
+      .select("-password -__v -doctor_profile -is_deleted -createdAt -updatedAt")
+      .skip(skip)
+      .limit(limit)
+      .sort({ first_name: 1 }); // Sort by first name
 
     res.status(200).json({
       message: "Patients retrieved successfully.",
-      count: patients.length,
+      count: totalPatients,
       patients: patients,
+      currentPage: page,
+      totalPages: totalPages,
     });
   } catch (error) {
     console.error("Error fetching doctor's patients:", error);
     res.status(500).send("Server Error");
   }
 };
-// @desc    Get details of a specific patient for the logged-in doctor
-// @route   GET /api/doctors/my-patients/:patientId
-// @access  Private (Doctor)
+
 exports.getPatientDetails = async (req, res) => {
   try {
     const doctorId = req.user._id; // ID الدكتور اللي عامل login
@@ -125,18 +153,13 @@ exports.getPatientDetails = async (req, res) => {
     res.status(500).send("Server Error");
   }
 };
-// @desc    Update a specific patient's profile by the logged-in doctor
-// @route   PUT /api/doctors/my-patients/:patientId/profile
-// @access  Private (Doctor)
+
 exports.updatePatientProfile = async (req, res) => {
   try {
-    const doctorId = req.user._id; // الـ ID بتاع الدكتور اللي عامل login
-    const patientId = req.params.patientId; // الـ ID بتاع المريض من الـ URL
-
-    // البيانات اللي الدكتور هيبعتها للتعديل هتكون في req.body
+    const doctorId = req.user._id;
+    const patientId = req.params.patientId;
     const updates = req.body;
 
-    // 1. التأكد من وجود المريض ودوره كـ 'Patient'
     const patient = await User.findOne({
       _id: patientId,
       role: "Patient",
@@ -147,8 +170,6 @@ exports.updatePatientProfile = async (req, res) => {
       return res.status(404).json({ message: "Patient not found." });
     }
 
-    // 2. التأكد من أن هذا المريض له علاقة بالدكتور الحالي
-    // (يعني الدكتور ده تعامل مع المريض ده في موعد أو روشتة)
     const hasRelation = await Promise.all([
       Appointment.exists({
         doctor_id: doctorId,
@@ -160,60 +181,32 @@ exports.updatePatientProfile = async (req, res) => {
 
     if (!hasRelation[0] && !hasRelation[1]) {
       return res.status(403).json({
-        message:
-          "Access denied: This patient is not associated with the logged-in doctor.",
+        message: "Access denied: This patient is not associated with the logged-in doctor.",
       });
     }
 
-    // 3. تطبيق التعديلات على بيانات المريض
-    // هنمشي على كل المفاتيح (keys) اللي جاية في الـ updates object
-    for (const key in updates) {
-      // حقول محددة لا يجب أن يتم تعديلها بواسطة الدكتور للأمان
-      // زي الـ ID، الـ role، الباسورد، أو البروفايل الخاص بالدكتور
-      if (
-        key === "_id" ||
-        key === "role" ||
-        key === "password" ||
-        key === "doctor_profile" ||
-        key === "is_deleted"
-      ) {
-        continue; // تخطي هذه الحقول
-      }
-
-      // لو الـ field موجود مباشرة في الـ User schema
-      if (patient[key] !== undefined) {
-        patient[key] = updates[key];
-      }
-      // لو الـ field موجود داخل الـ patient_profile object
-      else if (
-        patient.patient_profile &&
-        patient.patient_profile[key] !== undefined
-      ) {
-        // لو الـ field هو array زي allergies أو chronic_diseases،
-        // نتاكد ان الـ update نفسه array عشان ميحصلش overwrite غلط
-        if (
-          Array.isArray(patient.patient_profile[key]) &&
-          Array.isArray(updates[key])
-        ) {
-          patient.patient_profile[key] = updates[key];
-        } else if (
-          !Array.isArray(patient.patient_profile[key]) &&
-          !Array.isArray(updates[key])
-        ) {
-          patient.patient_profile[key] = updates[key];
-        } else {
-          // لو النوع مش متطابق (مثل تحديث array بـ non-array)، ممكن نتجاهله أو نرمي خطأ
-          console.warn(`Attempted to update ${key} with incompatible type.`);
+    if (updates.patient_profile) {
+      for (const key in updates.patient_profile) {
+        if (updates.patient_profile[key] !== undefined) {
+          if (!patient.patient_profile) {
+            patient.patient_profile = {};
+          }
+          patient.patient_profile[key] = updates.patient_profile[key];
         }
       }
     }
 
-    await patient.save(); // حفظ التعديلات في قاعدة البيانات
+    const basicFields = ['first_name', 'last_name', 'email', 'phone', 'gender', 'birth_date'];
+    basicFields.forEach(field => {
+      if (updates[field] !== undefined) {
+        patient[field] = updates[field];
+      }
+    });
 
-    // جلب بيانات المريض بعد التعديل لعرضها في الـ response
-    // مع استبعاد الحقول الحساسة أو غير الضرورية
+    await patient.save();
+
     const updatedPatient = await User.findById(patientId).select(
-      "-password -__v -doctor_profile -is_deleted -createdAt -updatedAt"
+      "-password -__v -doctor_profile -is_deleted"
     );
 
     res.status(200).json({
