@@ -8,7 +8,7 @@ const notificationService = require("../../services/notificationService");
 // @route   POST /api/doctors/prescriptions
 //          OR POST /api/doctors/my-patients/:patientId/prescriptions (if you add this route later)
 // @access  Private (Doctor)
-  exports.createPrescription = async (req, res) => {
+exports.createPrescription = async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -33,13 +33,10 @@ const notificationService = require("../../services/notificationService");
       notes, 
       priority = 'normal',
       follow_up_date,
-      prescription_text // Keep for backward compatibility
+      prescription_text 
     } = req.body;
 
     // Validation
-    if (!appointmentId) {
-      return res.status(400).json({ message: "Appointment ID is required." });
-    }
     if (!patientId) {
       return res.status(400).json({ message: "Patient ID is required." });
     }
@@ -72,26 +69,61 @@ const notificationService = require("../../services/notificationService");
       return res.status(404).json({ message: "Patient not found." });
     }
 
-    // Verify appointment exists and belongs to this doctor and patient
-    const appointment = await Appointment.findOne({
-      _id: appointmentId,
-      doctor_id: doctorId,
-      patient_id: patientId,
-      is_deleted: false,
-    });
+    let appointment = null;
+    let appointmentSnapshot = null;
 
-    if (!appointment) {
-      return res.status(404).json({
-        message: "Associated appointment not found or not linked to this doctor/patient.",
+    // إذا كان appointment_id موجود، تحقق منه
+    if (appointmentId) {
+      appointment = await Appointment.findOne({
+        _id: appointmentId,
+        doctor_id: doctorId,
+        patient_id: patientId,
+        is_deleted: false,
       });
+
+      if (!appointment) {
+        return res.status(404).json({
+          message: "Associated appointment not found or not linked to this doctor/patient.",
+        });
+      }
+
+      appointmentSnapshot = {
+        appointment_date: appointment.appointment_date,
+        patient_name: patient.first_name + " " + patient.last_name,
+        doctor_name: doctor.first_name + " " + doctor.last_name,
+      };
+    } else {
+      // إذا لم يكن هناك appointment_id، ابحث عن آخر appointment للمريض مع الطبيب
+      appointment = await Appointment.findOne({
+        doctor_id: doctorId,
+        patient_id: patientId,
+        is_deleted: false,
+      }).sort({ appointment_date: -1 }); // أحدث appointment
+
+      if (appointment) {
+        appointmentId = appointment._id;
+        appointmentSnapshot = {
+          appointment_date: appointment.appointment_date,
+          patient_name: patient.first_name + " " + patient.last_name,
+          doctor_name: doctor.first_name + " " + doctor.last_name,
+        };
+      } else {
+        // إنشاء appointment snapshot بدون appointment محدد
+        appointmentSnapshot = {
+          appointment_date: new Date(),
+          patient_name: patient.first_name + " " + patient.last_name,
+          doctor_name: doctor.first_name + " " + doctor.last_name,
+        };
+      }
     }
 
-    // Create appointment snapshot
-    const appointmentSnapshot = {
-      appointment_date: appointment.appointment_date,
-      patient_name: patient.first_name + " " + patient.last_name,
-      doctor_name: doctor.first_name + " " + doctor.last_name,
-    };
+    // إنشاء prescription_text من medications إذا لم يكن موجود
+    let finalPrescriptionText = prescription_text;
+    if (!finalPrescriptionText && medications.length > 0) {
+      finalPrescriptionText = medications
+        .map(med => `${med.name} - ${med.dosage} - ${med.frequency}`)
+        .join('; ');
+    }
 
     const newPrescription = new Prescription({
       appointment_id: appointmentId,
@@ -102,7 +134,7 @@ const notificationService = require("../../services/notificationService");
       notes,
       priority,
       follow_up_date: follow_up_date ? new Date(follow_up_date) : undefined,
-      prescription_text, // Keep for backward compatibility
+      prescription_text: finalPrescriptionText,
       appointment_snapshot: appointmentSnapshot,
     });
 
@@ -114,36 +146,6 @@ const notificationService = require("../../services/notificationService");
       { path: 'doctor_id', select: 'first_name last_name specialty' },
       { path: 'appointment_id', select: 'appointment_date status' }
     ]);
-
-    // Send notification to patient (uncomment if you have notification service)
-    /*
-    try {
-      const patientName = `${patient.first_name} ${patient.last_name}`;
-      const doctorName = `${doctor.first_name} ${doctor.last_name}`;
-
-      await notificationService.createNotification({
-        user_id: patientId,
-        type: "email",
-        category: "prescription_ready",
-        title: "New Prescription Available",
-        message: `
-          <h2>New Prescription</h2>
-          <p>Dear ${patientName},</p>
-          <p>Dr. ${doctorName} has created a new prescription for you.</p>
-          <p><strong>Diagnosis:</strong> ${diagnosis}</p>
-          <p>Please review your prescription in your patient portal.</p>
-        `,
-        data: {
-          prescriptionId: savedPrescription._id,
-          doctorName,
-          patientName,
-        },
-        priority: "medium",
-      });
-    } catch (notificationError) {
-      console.error("Error sending prescription notification:", notificationError);
-    }
-    */
 
     res.status(201).json({
       message: "Prescription created successfully.",

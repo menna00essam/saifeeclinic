@@ -142,12 +142,29 @@ router.post(
   auth,
   roleAuth("Doctor"),
   [
-    check("appointment_id", "Appointment ID is required")
+    check("appointment_id")
+      .optional()
+      .isMongoId()
+      .withMessage("Invalid appointment ID format"),
+    
+    check("patient_id", "Patient ID is required")
       .not()
       .isEmpty()
       .isMongoId(),
-    check("patient_id", "Patient ID is required").not().isEmpty().isMongoId(),
-    check("prescription_text", "Prescription text is required").not().isEmpty(),
+    
+    check("prescription_text")
+      .optional()
+      .not()
+      .isEmpty()
+      .withMessage("Prescription text cannot be empty"),
+    
+    check("diagnosis", "Diagnosis is required")
+      .not()
+      .isEmpty(),
+    
+    check("medications")
+      .isArray({ min: 1 })
+      .withMessage("At least one medication is required"),
   ],
   prescriptionController.createPrescription
 );
